@@ -366,7 +366,7 @@ for n=analysis_switch
                             data_dir = fullfile(funcPath, 'func');
                             %estimate and save motion statistics
                             n=1;
-                            k = strfind(runs{sj, r}, 'd.nii')
+                            k = strfind(runs{sj, r}, 'd.nii'); %% use prefix without file extension
                             f=spm_select('List', data_dir, ['^rp_' currPrefix(n:end) runs{sj, r}(1:k) '.txt']);
                             while isempty(f)
                                 n=n+1;
@@ -391,10 +391,11 @@ for n=analysis_switch
                                 data_dir = fullfile(funcPath, 'func');
                                 %estimate and save motion statistics
                                 n=1;
-                                f=spm_select('List', data_dir, ['^rp_' currPrefix(n:end) '.*\.txt']);
+								k = strfind(runs{sj, r}, 'd.nii'); %% use prefix without file extension
+                                f=spm_select('List', data_dir, ['^rp_' currPrefix(n:end) runs{sj, r}(1:k) '.*\.txt']);
                                 while isempty(f)
                                     n=n+1;
-                                    f=spm_select('List', data_dir, ['^rp_' currPrefix(n:end) '.*\.txt']);
+                                    f=spm_select('List', data_dir, ['^rp_' currPrefix(n:end) runs{sj, r}(1:k) '.*\.txt']);
                                 end
                                 cfg.motionparam=[data_dir filesep f];
                                 cfg.prepro_suite = 'spm';
@@ -402,7 +403,7 @@ for n=analysis_switch
                                 outliers=fwd>scrub_thresh;
                                 percent_out=(sum(outliers)/length(outliers))*100;
                                 disp(['outliers for ' num2str(SJs{sj}) ', ' runs{sj, r} ': ' num2str(percent_out) '%']);
-                                save([data_dir filesep scrub_prefix currPrefix '_' SJs{sj} '_' runs{sj, r} '_FWDstat.mat'],'fwd','rms','outliers','percent_out','scrub_thresh','cfg')
+                                save([data_dir filesep scrub_prefix currPrefix '_' SJs{sj} '_' runs{sj, r}(1:k) '_FWDstat.mat'],'fwd','rms','outliers','percent_out','scrub_thresh','cfg')
                                 %srub outliers by replacing them with average of nearest neighbors
                                 B7_scrub_data(data_dir, ['^' currPrefix runs{sj, r}], outliers,  scrub_prefix);
                                 all_percent_out(sj,r)=percent_out;

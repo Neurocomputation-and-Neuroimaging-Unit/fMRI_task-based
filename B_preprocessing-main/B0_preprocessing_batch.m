@@ -51,7 +51,7 @@ if exist([src_dir filesep SJs{1} filesep 'ses-1'])==7
     cd([src_dir filesep SJs{1}])
     sd = dir('ses*')
     sessNum = length(sd);
-    for sess = sessNum
+    for sess = 1:sessNum
         sessions(1, sess) = {sd(sess).name};
     end
     for sb = 1:numel(SJs)

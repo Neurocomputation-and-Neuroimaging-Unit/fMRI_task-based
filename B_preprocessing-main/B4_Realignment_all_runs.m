@@ -1,4 +1,4 @@
-function B4_Realignment_all_runs(sj_dir, run_files)
+function B4_Realignment_all_runs(runPath, run_files)
 
 warning off
 spm_figure('GetWin','Graphics');
@@ -8,9 +8,9 @@ fileset = {};
 % LOOP over sessions to assemble SPM-style file-set
 for r = 1:length(run_files)
         
-    if exist([sj_dir filesep 'func']) == 7
+%     if exist([sj_dir filesep 'func']) == 7
     
-        funcPath = [sj_dir filesep 'func'];
+        funcPath = runPath;
         % select the files
         f = run_files{r};
         % number of volumes
@@ -23,7 +23,7 @@ for r = 1:length(run_files)
         fileset{r}=files;
         clear f V files;
         
-    end
+%     end
 end
 
 if ~isempty(fileset)

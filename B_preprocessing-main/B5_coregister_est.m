@@ -21,6 +21,7 @@ for r = 1:size(runs,2)
 %     Images{r,:}=cellstr([repmat([func_dir filesep], numVols, 1) f3]);
     Images{r,:}=cellstr(spm_select('ExtFPList', func_dir,['^' currPrefix runs{sj,r}],Inf));
 end
+
 %--------------------------------------------------------------------------
 %---------------------------- Coregister (Estimate) -----------------------
 %--------------------------------------------------------------------------

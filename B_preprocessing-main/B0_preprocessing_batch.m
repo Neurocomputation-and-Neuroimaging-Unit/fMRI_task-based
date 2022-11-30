@@ -378,7 +378,7 @@ for n=analysis_switch
                             outliers=fwd>scrub_thresh;
                             percent_out=(sum(outliers)/length(outliers))*100;
                             disp(['outliers for ' num2str(SJs{sj}) ', ' runs{r} ': ' num2str(percent_out) '%']);
-                            save([data_dir filesep scrub_prefix currPrefix '_' runs{sj, r}(1:k) '_FWDstat.mat'],'fwd','rms','outliers','percent_out','scrub_thresh','cfg')
+                            save([data_dir filesep scrub_prefix currPrefix runs{sj, r}(1:k) '_FWDstat.mat'],'fwd','rms','outliers','percent_out','scrub_thresh','cfg')
                             %srub outliers by replacing them with average of nearest neighbors
                             B7_scrub_data(data_dir, ['^' currPrefix runs{sj, r}], outliers,  scrub_prefix);
                             all_percent_out(sj,r)=percent_out;
@@ -403,7 +403,7 @@ for n=analysis_switch
                                 outliers=fwd>scrub_thresh;
                                 percent_out=(sum(outliers)/length(outliers))*100;
                                 disp(['outliers for ' num2str(SJs{sj}) ', ' runs{sj, r} ': ' num2str(percent_out) '%']);
-                                save([data_dir filesep scrub_prefix currPrefix '_' SJs{sj} '_' runs{sj, r}(1:k) '_FWDstat.mat'],'fwd','rms','outliers','percent_out','scrub_thresh','cfg')
+                                save([data_dir filesep scrub_prefix currPrefix runs{sj, r}(1:k) '_FWDstat.mat'],'fwd','rms','outliers','percent_out','scrub_thresh','cfg')
                                 %srub outliers by replacing them with average of nearest neighbors
                                 B7_scrub_data(data_dir, ['^' currPrefix runs{sj, r}], outliers,  scrub_prefix);
                                 all_percent_out(sj,r)=percent_out;

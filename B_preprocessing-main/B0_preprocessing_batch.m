@@ -342,7 +342,7 @@ for n=analysis_switch
                                     sesPath = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses)];
                                     func_dir        = fullfile(sesPath, 'func');
                                     struct_dir      = fullfile(sesPath, ana);
-                                    B6_normalization_run(data_dir, struct_dir, sj, runs, vox_size, currPrefix);
+                                    B6_normalization_run(func_dir, struct_dir, sj, runs, vox_size, currPrefix);
                                 end
                         else
                             display('###########################################################')

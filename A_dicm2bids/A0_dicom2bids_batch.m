@@ -22,7 +22,7 @@ cd(sourceF);
 % pb = dir('*loe_*');
 % pb = [pb dir('*pha_*')];
 % pb = [pb dir('*ccnb_*')];
-pb = dir('*ccnb_*');
+pb = dir('**/*ccnb_*');
 
 task = 'task';
 

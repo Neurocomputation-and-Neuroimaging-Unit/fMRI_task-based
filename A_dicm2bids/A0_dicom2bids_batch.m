@@ -34,11 +34,11 @@ if sess(1) == 1 && sess(2) == length(pb) %% 1 sj and a lot of seesions to store 
     for ses = 1:sess(2)
         fSess = [fSubj 'ses-' num2str(ses) '/'];
         if ~exist(fSess, 'dir'), mkdir(fSess); end
-        dcmDir = [sourceF filesep pb(ses).name];
+        dcmDir = [pb(ses).folder filesep pb(ses).name];
         A1_dicm2bids(dcmDir, targetF, 1, task, sess, ses);    %%%% übergib session: hier halten wir uns an session-ordner & benennung! irgendwie...
     end
 
-elseif sess(1) == 1
+elseif sess(1) == 1 % more sessions and subjects + extra instance for session folder
     if mod(length(pb), sess(2)) ~= 0
         error('Unexpected number of input or sessions!')
     end
@@ -56,20 +56,20 @@ elseif sess(1) == 1
         for ses = 1:sess(2)
             fSess = [fSubj 'ses-' num2str(ses) '/'];
             if ~exist(fSess, 'dir'), mkdir(fSess); end
-            dcmDir = [sourceF filesep pb(ses+(subj-1)*(sess(2))).name];
+            dcmDir = [pb(ses+(subj-1)*(sess(2))).folder filesep pb(ses+(subj-1)*(sess(2))).name];
             A1_dicm2bids(dcmDir, targetF, 1, task, sess, ses);    %%%% übergib session: hier halten wir uns an session-ordner & benennung! irgendwie...
         end
     end
 
-elseif sess(2) > 1
-    if sess(2) == length(pb)
+elseif sess(2) > 1 % no session-folder-instance
+    if sess(2) == length(pb) % 1 subject
         fSubj = [targetF '/sub-001/'];
         if ~exist(fSubj, 'dir'), mkdir(fSubj); end
         for ses = 1:sess(2)
-            dcmDir = [sourceF filesep pb(ses).name];
+            dcmDir = [pb(ses).folder filesep pb(ses).name];
             A1_dicm2bids(dcmDir, targetF, 1, task, sess, ses);    %%%% übergib session: hier halten wir uns an session-ordner & benennung! irgendwie...
         end
-    else
+    else % more that 1 session and subject
         if mod(length(pb), sess(2)) ~= 0
         error('Unexpected number of input or sessions!')
         end
@@ -85,12 +85,12 @@ elseif sess(2) > 1
             fSubj = [targetF '/sub-' sub '/'];
             if ~exist(fSubj, 'dir'), mkdir(fSubj); end
             for ses = 1:sess(2)
-                dcmDir = [sourceF filesep pb(ses+(subj-1)*(sess(2))).name];
+                dcmDir = [pb(ses+(subj-1)*(sess(2))).folder filesep pb(ses+(subj-1)*(sess(2))).name];
                 A1_dicm2bids(dcmDir, targetF, subj, task, sess, ses);    %%%% übergib session: hier halten wir uns an session-ordner & benennung! irgendwie...
             end
         end
     end
-else
+else % no sessions at all, only subjects!
     for subj = 1:length(pb) %% subj must be numeric
         if subj < 10
                 sub = ['00' num2str(subj)];
@@ -101,7 +101,7 @@ else
         end
         fSubj = [targetF '/sub-' sub '/'];
         if ~exist(fSubj, 'dir'), mkdir(fSubj); end
-        dcmDir = [sourceF filesep pb(subj).name];
+        dcmDir = [pb(subj).folder filesep pb(subj).name];
         A1_dicm2bids(dcmDir, targetF, subj, task, sess);
     end
 end

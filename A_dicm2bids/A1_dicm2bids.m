@@ -238,7 +238,7 @@ end
 for i = 1:N-1 % deal with name conflict
     if isempty(types{i}), continue; end
     ind = find(strcmp(strcat(types,names), [types{i} names{i}]));
-    ind = ind(ind>i);
+    %ind = ind(ind>i);
     if ind == 1
         continue; 
     end

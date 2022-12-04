@@ -10,7 +10,7 @@ targetF = 'C:\Users\saraw\Desktop\BIDS\test11';
 
 addpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\dicm2nii-master')
 
-sess = [1 2]; % do wou want an extra instance for session folders? (yes = 1, no = 0) 
+sess = [0 1]; % do wou want an extra instance for session folders? (yes = 1, no = 0) 
     % How many sessions are there per subject? (eg. 1 or 4) NOT RUNS!
 
 if ~exist(targetF, 'dir')

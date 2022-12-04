@@ -239,7 +239,7 @@ for i = 1:N-1 % deal with name conflict
     if isempty(types{i}), continue; end
     ind = find(strcmp(strcat(types,names), [types{i} names{i}]));
     ind = ind(ind>i);
-    if isempty(ind)
+    if ind == 1
         continue; 
     end
 %     if types{i} == "func"       %%%%%%%%%%% verbessern! bis dahin lassen...
@@ -249,7 +249,9 @@ for i = 1:N-1 % deal with name conflict
 %             types{i} = ''; continue; % stopped/incomplete run, skip it
 %         end
 %     end
-    names{ind} = [names{ind} '_' num2str(ind)]; % append nii name to avoid overwrite (PROBLEM: nii-names might be indentical, too!) OR append i to avoid overwrite
+    for jj = ind
+        names{jj} = [names{jj} '_' num2str(jj)]; % append nii name to avoid overwrite (PROBLEM: nii-names might be indentical, too!) OR append i to avoid overwrite
+    end
     warning('Identical names detected! Please check input and output data for possible mistakes.');
 end
 

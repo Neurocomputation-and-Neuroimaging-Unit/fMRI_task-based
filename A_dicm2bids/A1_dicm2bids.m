@@ -249,7 +249,7 @@ for i = 1:N-1 % deal with name conflict
 %             types{i} = ''; continue; % stopped/incomplete run, skip it
 %         end
 %     end
-    for jj = ind
+    for jj = ind'
         names{jj} = [names{jj} '_' num2str(jj)]; % append nii name to avoid overwrite (PROBLEM: nii-names might be indentical, too!) OR append i to avoid overwrite
     end
     warning('Identical names detected! Please check input and output data for possible mistakes.');

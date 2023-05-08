@@ -1,7 +1,5 @@
 % function B0_preprocessing_batch
 
-% please send questions to Till Nierhaus (till.nierhaus@fu-berlin.de) or Timo T. Schmidt ().
-
 %### step A, structure data before running the preprocessing
 %### --> convert DICOM images to 4D NIFTI image
 %### --> subject folders (e.g. 'SJ002') including functional (e.g. 'func') and anatomy (e.g. 'anat') folders
@@ -140,7 +138,7 @@ x=0;
 %  for interleaved slice order: do slice time correction, then realignment
 %  otherwise do first realignment, then slice time correction (in analysis_switch 4 before 3)
 % n_slices = 37; % number of slices
-slice_order=[1:n_slices];
+%slice_order=[1:n_slices];
 refslice=slice_order(round(length(slice_order)/2)); % reference slice
 % TR=2; % repetition time in sec.
 %# step 4  Realignment                                --> prefix: r
@@ -149,8 +147,8 @@ refslice=slice_order(round(length(slice_order)/2)); % reference slice
 %# step 5b  Coregister (estimate & resclice) mean-epi 2 anatomy --> prefix c
 Co_er = 0; %default: 0, if 1, then estimate & reslice
 %# step 6  Normalization                              --> prefix: w
-% vox_size=[2 2 2]; % preferred voxel size after Normailzation (in mm)
-vox_size=repmat(info.PixelDimensions(1),1,3); % Voxel size from JSON-file (not changed)
+vox_size=[2 2 2]; % preferred voxel size after Normailzation (in mm)
+%vox_size=repmat(info.PixelDimensions(1),1,3); % Voxel size from JSON-file (not changed)
 %# step 7  Scrubbing: calculate, interpolate outliers --> prefix: m(scrub_thresh)
 scrub_thresh=0.4; % threshhold FD for scrubbing
 %# step 8 Calculate WM and CSF Nuisance Signal
@@ -203,7 +201,7 @@ for n=analysis_switch
                                 display(['Step 2, delete first ' num2str(x) ' volumes: ' SJs{sj} ', ' runs{sj, r}])
                                 run_dir = fullfile(src_dir, SJs{sj}, 'func');
                                 B2_delete_scans(run_dir, ['^' currPrefix runs{sj, r}],x);
-                            elseif sessNum > 0 && exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep runs{sj, r}])
+                            elseif sessNum > 0 && exist([run_dir filesep SJs{sj} filesep 'ses-1' filesep runs{sj, r}])
                                 for ses = 1:sessNum
                                     display(['Step 2, delete first ' num2str(x) ' volumes: ' SJs{sj} ', ' runs{sj, r}])
                                     sesPath = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses)];

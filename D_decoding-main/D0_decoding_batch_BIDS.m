@@ -10,15 +10,15 @@
 
 
 %SPM-path
-SPM_path  = 'C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\spm12';
+SPM_path  = 'C:\Users\...\Toolboxes\spm12';
 
 %data source directory
 src_dir      = 'C:\Users\saraw\Desktop\BIDS\fmri';
 
 addpath(genpath('C:\Users\saraw\Desktop\BIDS')); %%%%%%% your current working directory %%%%%%%%%%%%%% eg: 'F:\GForce\Dataanalysis\D_decoding_BIDS-main'
-addpath(genpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\hMRI-toolbox-0.4.0'));
-addpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\decoding_toolbox');
-addpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\spm12');
+addpath(genpath('C:\Users\...\Toolboxes\hMRI-toolbox-0.4.0'));
+addpath('C:\Users\...\Toolboxes\decoding_toolbox');
+addpath('C:\Users\...\Toolboxes\spm12');
 
 %subject identifiers if all subjects are to be included
 %%%% to do: SJs to sub
@@ -111,10 +111,10 @@ n_slices = n_slices_json; % number of slices
 TR=TR_json; % repetition time in sec.
 
 %% selection of analysis steps (1-5) to be performed
-analysis_switch = [4]; % 0 1 2 3 4 5
-start_prefix='rb'; 
+analysis_switch = [4]; % 1 2 3 4 5
+start_prefix='r'; 
 %'' when bids and unpreprocessed; 
-%rba/arb if already slicetime-corrected and realigned
+%ra/ar if already slicetime-corrected and realigned
 %'' if doing normilazation of accuracy maps
 %w if aready normalized
 % watch order of prefixes
@@ -133,7 +133,7 @@ fir_out = [num2str(WMdelay/TR) '_bins'];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %# step 3: 1st level glm for NOT-normalized data
-% must include variable 'onsets' (cell with runs x conditions) including onset-times in sec
+% must include variable 'onsets' (cell with sj x runs x conditions) including onset-times in sec
 
 condnames = {'WM1', 'WM2', 'WM3', 'WM4', 'hit', 'miss', 'catch1', 'catch2'}; 
 duration = 3; % epoch duration; for single events set 0

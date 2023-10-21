@@ -143,6 +143,9 @@ refslice=slice_order(round(length(slice_order)/2)); % reference slice
 %# step 4  Realignment                                --> prefix: r
 % realign over all runs
 %# step 5  Coregister (estimate) mean-epi 2 anatomy (DEFAULT)
+corrPrefix = ''; % so if you perform differnt kinds of preprocessing, there will be 
+% multiple 'mean...nii' files -> check which one you want and if theres anything 
+% in between the 'mean' and 'sub-00...' then put that there (probably nothing or an a?)
 %# step 5b  Coregister (estimate & resclice) mean-epi 2 anatomy --> prefix c
 Co_er = 0; %default: 0, if 1, then estimate & reslice
 %# step 6  Normalization                              --> prefix: w
@@ -293,7 +296,7 @@ for n=analysis_switch
                             struct_dir      = fullfile(funcPath, ana);
 							if Co_er ~= 1
 								display(['Step 5, coregistration (estimate): ' SJs{sj}])
-                            	B5_coregister_est(currPrefix, func_dir, struct_dir, sj, '^s.*\.nii', runs);
+                            	B5_coregister_est(currPrefix, func_dir, struct_dir, sj, '^s.*\.nii', runs, corrPrefix);
 							else
 								display(['Step 5b, coregistration (estimate & reslice): ' SJs{sj}])
 								B5b_coregister_est_re(currPrefix, func_dir, struct_dir, SJs{sj}, '^s.*\.nii', runs);
@@ -306,7 +309,7 @@ for n=analysis_switch
                                     struct_dir      = fullfile(sesPath, ana);
 									if Co_er ~= 1
 										display(['Step 5, coregistration (estimate): ' SJs{sj}])
-                                    	B5_coregister_est(currPrefix, func_dir, struct_dir, sj, '^s.*\.nii', runs);
+                                    	B5_coregister_est(currPrefix, func_dir, struct_dir, sj, '^s.*\.nii', runs, corrPrefix);
 									else
 										display(['Step 5b, coregistration (estimate & reslice): ' SJs{sj}])
 										B5b_coregister_est_re(currPrefix, func_dir, struct_dir, SJs{sj}, '^s.*\.nii', runs);

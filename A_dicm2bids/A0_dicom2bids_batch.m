@@ -5,13 +5,17 @@
 
 cd('C:\Users\saraw\Desktop\BIDS')
 
-sourceF = 'C:\Users\saraw\Desktop\BIDS\raw_with_defusion'; %this is the folder that contains your raw data (folders eg. ccnb_12345)
-targetF = 'C:\Users\saraw\Desktop\BIDS\test11';
+sourceF = 'C:\Users\saraw\Desktop\BIDS\raw'; %this is the folder that contains your raw data (folders eg. ccnb_12345)
+targetF = 'C:\Users\saraw\Desktop\BIDS\test';
 
-addpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\dicm2nii-master')
+addpath('C:\...\Toolboxes\dicm2nii-master')
 
 sess = [0 1]; % do wou want an extra instance for session folders? (yes = 1, no = 0) 
     % How many sessions are there per subject? (eg. 1 or 4) NOT RUNS!
+    % so if i had 4 sessions per subject and want an extra folder per session: [1 4]
+    % if i had a single session and dont want an extra folder: [0 1]
+    % if i had 370ish sessions and wanted no extra folder per session: [0 370] (oficially a bad decision though)
+    % this script can NOT (yet?) handle different amounts of sessions for differnt subjects! 
 
 if ~exist(targetF, 'dir')
     mkdir(targetF);
@@ -21,12 +25,12 @@ end
 cd(sourceF);
 % pb = dir('*loe_*');
 % pb = [pb dir('*pha_*')];
-% pb = [pb dir('*ccnb_*')];
-pb = dir('**/*ccnb_*');
+pb = [pb dir('*ccnb_*')]; % this one to find our standard-style exported data
+% pb = dir('**/*ccnb_*'); % this one if you'd also like to search in sub-folders
 
-task = 'task';
+task = 'task'; % the only thing you get to able to personalize about the file-names
 
-%% convert
+%% convert (no need to change anything here)
 
 if sess(1) == 1 && sess(2) == length(pb) %% 1 sj and a lot of seesions to store in diff folders
     fSubj = [targetF '/sub-001/'];

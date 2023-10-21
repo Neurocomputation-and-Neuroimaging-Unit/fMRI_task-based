@@ -1,4 +1,4 @@
-function B5_coregister_est(currPrefix, func_dir, struct_dir, sj, filter_struct, runs)
+function B5_coregister_est(currPrefix, func_dir, struct_dir, sj, filter_struct, runs, corrPrefix)
 
 warning off
 
@@ -6,7 +6,7 @@ f1 = spm_select('List', struct_dir, filter_struct);
 numVols = size(f1,1);
 structural = cellstr([repmat([struct_dir filesep], numVols, 1) f1 repmat(',1', numVols, 1)]);
 
-f2 = spm_select('List', func_dir, ['^mean.*\.nii']);
+f2 = spm_select('List', func_dir, ['^mean' corrPrefix runs{sj, 1}]);
 numVols = size(f2,1);
 mean_img   = cellstr([repmat([func_dir filesep], numVols, 1) f2 repmat(',1', numVols, 1)]);
 

@@ -1,12 +1,12 @@
 % function B0_preprocessing_batch
 
 %### step A, structure data before running the preprocessing
-%### --> convert DICOM images to 4D NIFTI image
-%### --> subject folders (e.g. 'SJ002') including functional (e.g. 'func') and anatomy (e.g. 'anat') folders
+%### --> convert DICOM images to 4D NIFTI image IN BIDS FORMAT (ESSENTIAL)
+%### --> subject folders (e.g. 'sub-002') including functional (e.g. 'func') and anatomy (e.g. 'anat') folders
 %### --> optional instance for sessions
 %############################################################################################
 
-% required toolboxes:
+% required toolboxes (only download and add what you need):
 % SPM12 ( http://www.fil.ion.ucl.ac.uk/spm/ )
 % Rest_plus (1.8) ( http://restfmri.net/forum/index.php?q=rest )
 % hMRI (https://www.cbs.mpg.de/departments/neurophysics/software/hmri-toolbox)
@@ -19,16 +19,17 @@
 clc
 clear all
 close all
+
 addpath('C:\Users\saraw\Desktop\BIDS\task-based_fMRI_preprocessing-main')
-% addpath(genpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\bramila-master'))
-% addpath(genpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\REST_V1.8'))
-% addpath(genpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\RESTplus_v1.24')) fucks up normalization somehow
-addpath(genpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\hMRI-toolbox-0.4.0'))
-% addpath(genpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\DPABI_V5.1_201201'))
-addpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\spm12')
+% addpath(genpath('C:\Users\...\Toolboxes\bramila-master'))
+% addpath(genpath('C:\Users\...\Toolboxes\REST_V1.8'))
+% addpath(genpath('C:\Users\...\Toolboxes\RESTplus_v1.24')) fucks up normalization somehow
+addpath(genpath('C:\Users\...\Toolboxes\hMRI-toolbox-0.4.0'))
+% addpath(genpath('C:\Users\saraw\...\Toolboxes\DPABI_V5.1_201201'))
+addpath('C:\Users\...\Toolboxes\spm12')
 
 %SPM-path
-SPM_path  = 'C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\spm12';
+SPM_path  = 'C:\Users\...\Toolboxes\spm12';
 
 %data source directory
 src_dir      = 'C:\Users\saraw\Desktop\BIDS\fmri';
@@ -40,8 +41,17 @@ for i=1:length(pb)
     SJs(1,i)={pb(i).name};
 end
 
-excludeSJ = [1]; % zb. unvollständige datensätze
+excludeSJ = []; % keep empty if preprocessing is planned for all subjects, other wise just put them in by number: [4 6 9]
+% soon to be added: excludeRun = []; % same
 
+%unzip
+zip_files = dir(fullfile(src_dir, '**', ['sub-', '*.gz']));
+if ~isempty(zip_files) 
+	for z = 1:size(zip_files, 1)
+		gunzip([zip_files(z).folder filesep zip_files(z).name]);
+        delete([zip_files(z).folder filesep zip_files(z).name]);
+	end
+end
 
 %session & run identifiers
 sessNum = 0;
@@ -71,33 +81,22 @@ end
 
 %anatomy identifier
 ana=['anat'];
-%unzip
-zip_files = dir(fullfile(src_dir, '**', ['sub-', '*.gz']));
-if ~isempty(zip_files) 
-	for z = 1:size(zip_files, 1)
-		gunzip([zip_files(z).folder filesep zip_files(z).name]);
-        delete([zip_files(z).folder filesep zip_files(z).name]);
-	end
-end
 
 nifti_files = dir(fullfile(src_dir, '**', ['sub-', '*bold.nii'])); %look for all functional nifti files
 anat_files = dir(fullfile(src_dir, '**', ['sub-', '*T1w.nii'])); %look for all anat nifti files
 
-%anatomical masks
-wm_mask=['C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\wm_mask_eroded.nii']; %white matter mask file
-csf_mask=['C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\csf_mask_eroded.nii']; %csf mask file
-full_brain_mask=['C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\full_brain_mask.nii']; %full brain mask file
+%anatomical masks (for comp corr)
+wm_mask=['C:\Users\...\wm_mask_eroded.nii']; %white matter mask file
+csf_mask=['C:\Users\...\csf_mask_eroded.nii']; %csf mask file
+full_brain_mask=['C:\Users\...\full_brain_mask.nii']; %full brain mask file
 
 % selection of analysis steps (1-12) to be performed
 analysis_switch = [7 10]; %1 4 3 5 7 8 9
-start_prefix='rba'; %'gf4d'; %ohne artrepair 
-
+start_prefix=''; %'gf4d'; %if totally raw data, then keep empty, otherwise add prefix, e.g. 's8wra'
 
 %now we get the data from the json file 
 json_files = (dir(fullfile(src_dir, '**', ['task', '*json']))); %extract all json files, althoguh they should have the same info 
-%because for some datasets (flicker and Ganzfeld) we have json files for
-%each nift file and these are named differently, we have to check if the
-%first command returns an empty structure. If yes, it means the json files
+%to check if the first command returns an empty structure. If yes, it means the json files
 %have a different naming, starting with subject 
 if isequal(size(json_files), [0, 1]) 
     json_files = (dir(fullfile(src_dir, '**', ['sub-', '*bold.json'])));
@@ -124,21 +123,21 @@ if n_slices_json ~= n_slices_nifti
     warning ("Number of slices does not match between json file and nifti") 
 end 
 
-%%% I suggest using the json values at least for TR since we know it is
-%%% missing in the nifti headers for some datasets
 TR = TR_json;
 n_slices = n_slices_json; 
 
+
+%# ------ NOTE: spike removal (e.g. "artrepair") should be performed as first step
+
 %# step 1  Segmentation
 %# ------ Create nuisance masks on your own or take the provided ones
-%# ------ NOTE: spike removal (e.g. "artrepair") should be performed as first step
 %# step 2 --> remove first x scans                       --> prefix: x(number of cut volumes)
 x=0;
 %# step 3 --> slice time correction                      --> prefix: a
 %  for interleaved slice order: do slice time correction, then realignment
 %  otherwise do first realignment, then slice time correction (in analysis_switch 4 before 3)
 % n_slices = 37; % number of slices
-%slice_order=[1:n_slices];
+% slice_order=[1:n_slices];
 refslice=slice_order(round(length(slice_order)/2)); % reference slice
 % TR=2; % repetition time in sec.
 %# step 4  Realignment                                --> prefix: r

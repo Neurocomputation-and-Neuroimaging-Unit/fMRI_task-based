@@ -1,8 +1,6 @@
-%% decoding BATCH %%
+%% Stats BATCH %%
 
-% required toolboxes:
-% the decoding toolbox TDT
-%  https://doi.org/10.3389/fninf.2014.00088
+% so, this is a highly specific thing, don't think there's nothing to do for you...
 
 %#####################################################
 %#################### INPUT ##########################
@@ -10,15 +8,15 @@
 
 
 %SPM-path
-SPM_path  = 'C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\spm12';
+SPM_path  = 'C:\Users\...\Toolboxes\spm12';
 
 %data source directory
-src_dir      = 'C:\Users\saraw\Desktop\BIDS\test3_pilotdataIMACU';
+src_dir      = 'C:\Users\saraw\Desktop\BIDS\test';
 
 addpath(genpath('C:\Users\saraw\Desktop\BIDS')); %%%%%%% your current working directory %%%%%%%%%%%%%% eg: 'F:\GForce\Dataanalysis\D_decoding_BIDS-main'
-addpath(genpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\hMRI-toolbox-0.4.0'));
-% addpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\decoding_toolbox');
-addpath('C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\Toolboxes\spm12');
+addpath(genpath('C:\Users\...\Toolboxes\hMRI-toolbox-0.4.0'));
+% addpath('C:\Users\...Toolboxes\decoding_toolbox'); %not in here
+addpath('C:\Users\...\Toolboxes\spm12');
 
 %subject identifiers if all subjects are to be included
 %%%% to do: SJs to sub
@@ -111,13 +109,13 @@ n_slices = n_slices_json; % number of slices
 TR=TR_json; % repetition time in sec.
 
 %% selection of analysis steps (1-5) to be performed
-analysis_switch = [4]; % 1 2 3 4 5
+analysis_switch = [1 2 3 5]; % 1 2 3 4 5
 start_prefix='s8wrba'; %eg. s8wra
 %'' when bids and unpreprocessed; 
-%rba/arb if already slicetime-corrected and realigned
-%'' if doing normilazation of accuracy maps
+%ra/ar if already slicetime-corrected and realigned
+%'' if doing normalization of accuracy maps
 %w if aready normalized
-% watch order of prefixes
+% watch order of prefixes!
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %# step 1: extract onsets reeeealy fast if you havn't done that yet

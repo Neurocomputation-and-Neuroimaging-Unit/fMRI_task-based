@@ -82,7 +82,7 @@ end
 %anatomy identifier
 ana=['anat'];
 
-nifti_files = dir(fullfile(src_dir, '**', ['sub-', '*bold.nii'])); %look for all functional nifti files
+nifti_files = dir(fullfile(src_dir, '**', ['sub-', '*bold*.nii'])); %look for all functional nifti files
 anat_files = dir(fullfile(src_dir, '**', ['sub-', '*T1w.nii'])); %look for all anat nifti files
 
 %anatomical masks (for comp corr)
@@ -99,7 +99,7 @@ json_files = (dir(fullfile(src_dir, '**', ['task', '*json']))); %extract all jso
 %to check if the first command returns an empty structure. If yes, it means the json files
 %have a different naming, starting with subject 
 if isequal(size(json_files), [0, 1]) 
-    json_files = (dir(fullfile(src_dir, '**', ['sub-', '*bold.json'])));
+    json_files = (dir(fullfile(src_dir, '**', ['sub-', '*bold*.json'])));
 end
 
 json_file = [json_files(1).folder, filesep, json_files(1).name]; %we select the first json file to extract metadata from 
@@ -260,7 +260,7 @@ for n=analysis_switch
                             for r = 1:size(runs, 2)
                                 run_files{r} = spm_select('List',run_dir,['^' currPrefix runs{sj, r}]);
                             end
-                            B4_Realignment_all_runs(sj_dir, run_files);
+                            B4_Realignment_all_runs(run_dir, run_files);
                             
                         elseif sessNum > 0 && exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep 'func' filesep runs{sj, r}])
                                 for ses = 1:sessNum

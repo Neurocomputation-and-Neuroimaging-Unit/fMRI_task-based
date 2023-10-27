@@ -34,7 +34,7 @@ function A1_dicm2bids(dcmDir, niiDir, varargin)
 % dwi/sub-_ses-_acq-_dir-_run-_part-_dwi
 
 if nargin<2 || isempty(niiDir), niiDir = './'; end
-if ~endsWith(niiDir, {'\' '/'}), niiDir = [niiDir '/']; end
+if ~endsWith(niiDir, {'\' '/'}), niiDir = [niiDir filesep]; end
 save_json = getpref('dicm2nii_gui_para', 'save_json', false);
 setpref('dicm2nii_gui_para', 'save_json', true);
 dicm2nii(dcmDir, niiDir); 
@@ -48,16 +48,18 @@ if nargin > 2 %% allow batch-skript with number of subject in case of many subje
 
     subj = varargin(1);
     subj = subj{1,1};
-
-    if subj < 10
-        subj = ['00' num2str(subj)];
-    elseif subj < 100
-        subj = ['0' num2str(subj)];
-    else
-        subj = num2str(subj);
+    
+    try
+        if subj < 10
+            subj = ['00' num2str(subj)];
+        elseif subj < 100
+            subj = ['0' num2str(subj)];
+        else
+            subj = num2str(subj);
+        end        
     end
 
-    fSubj = [niiDir 'sub-' subj '/'];
+    fSubj = [niiDir 'sub-' subj filesep];
 
     if nargin > 3 %% allow manual naming of tasks in batch skript
 
@@ -69,10 +71,21 @@ if nargin > 2 %% allow batch-skript with number of subject in case of many subje
             sess = varargin(3);
             sess = sess{1,1};
 
+            if ischar(sess)
+                fSubj = [niiDir 'sub-' subj filesep 'sub-' subj '_ses-' sess];
+            end
+
             if nargin > 5
                 
                 ses = varargin(4);
                 ses = ses{1,1};
+
+                if nargin > 6
+
+                    skip_sbref = varargin(5);
+                    skip_sbref = skip_sbref{1,1};
+
+                end
 
             end
 
@@ -83,7 +96,7 @@ if nargin > 2 %% allow batch-skript with number of subject in case of many subje
 else
 
     subj = regexprep(s.PatientName, '[^0-9a-zA-Z]', ''); 
-    fSubj = [niiDir 'sub-' subj '/'];
+    fSubj = [niiDir 'sub-' subj filesep];
 
 end
 
@@ -166,7 +179,12 @@ for i = 1:N
             names{i} = [names{i} '_echo-' ec{1}];
         end
         if endsWith(s.SeriesDescription, '_SBRef')
-            names{i} = [names{i} '_sbref'];
+            if skip_sbref
+                types{i} = 'other';
+                continue;
+            else
+                names{i} = [names{i} '_sbref'];
+            end
         else
             names{i} = [names{i} '_bold'];                               
         end
@@ -256,7 +274,7 @@ end
 for i = 1:N
     if isempty(types{i}), continue; end
     if sess(1) == 1
-        f = [fSubj 'ses-' num2str(ses) '/' types{i} '/'];
+        f = [fSubj 'ses-' num2str(ses) filesep types{i} filesep];
         if ~exist(f, 'dir'), mkdir(f); end
         dst = [f 'sub-' subj '_' names{i}];
     elseif sess(2) > 1

@@ -26,8 +26,8 @@ end
 %---------------------------- Coregister (Estimate) -----------------------
 %--------------------------------------------------------------------------
 for i = 1:size(Images,1)
-    matlabbatch{1}.spm.spatial.coreg.estimate.ref = structural;
-    matlabbatch{1}.spm.spatial.coreg.estimate.source = mean_img;
+    matlabbatch{1}.spm.spatial.coreg.estimate.ref = mean_img;
+    matlabbatch{1}.spm.spatial.coreg.estimate.source = structural;
     matlabbatch{1}.spm.spatial.coreg.estimate.other = Images{i,:};
     matlabbatch{1}.spm.spatial.coreg.estimate.eoptions.cost_fun = 'nmi';
     matlabbatch{1}.spm.spatial.coreg.estimate.eoptions.sep = [4 2];

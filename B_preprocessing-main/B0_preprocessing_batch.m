@@ -42,7 +42,7 @@ for i=1:length(pb)
 end
 
 excludeSJ = []; % keep empty if preprocessing is planned for all subjects, other wise just put them in by number: [4 6 9]
-% soon to be added: excludeRun = []; % same
+excludeRun = []; % same thing
 
 %unzip
 zip_files = dir(fullfile(src_dir, '**', ['sub-', '*.gz']));
@@ -66,7 +66,11 @@ if exist([src_dir filesep SJs{1} filesep 'ses-1'])==7
         cd([src_dir filesep SJs{sb} filesep sessions{1} filesep 'func']);
         rd = dir('sub*.nii')
         for r = 1:length(rd)
-            runs(sb, r) = {rd(r).name};
+			if ismember(r, excludeRuns)
+                continue;
+            else
+            	runs(sb, r) = {rd(r).name};
+			end
         end
     end
 else
@@ -74,7 +78,11 @@ else
         cd([src_dir filesep SJs{sb} filesep 'func']);
         rd = dir('sub*.nii')
         for r = 1:length(rd)
-            runs(sb, r) = {rd(r).name};
+			if ismember(r, excludeRuns)
+                continue;
+            else
+            	runs(sb, r) = {rd(r).name};
+			end
         end
     end
 end

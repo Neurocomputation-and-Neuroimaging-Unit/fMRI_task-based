@@ -92,7 +92,7 @@ for r = 1:size(runs,2)
         
         for c = 1:length(condnames)
             matlabbatch{1}.spm.stats.fmri_spec.sess(r).cond(c).name = condnames{c};
-            matlabbatch{1}.spm.stats.fmri_spec.sess(r).cond(c).onset = onsets{r,c};
+            matlabbatch{1}.spm.stats.fmri_spec.sess(r).cond(c).onset = onsets{sj,r,c};
             matlabbatch{1}.spm.stats.fmri_spec.sess(r).cond(c).duration = duration;            
 
              %single events für motion/antwort

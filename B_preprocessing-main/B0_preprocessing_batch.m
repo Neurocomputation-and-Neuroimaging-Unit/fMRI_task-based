@@ -280,7 +280,7 @@ for n=analysis_switch
                                     end                                    
                                     B4_Realignment_all_runs(sesPath, run_files);
 								end
-                        end
+                        
                         else
                             display('###########################################################')
                             display(['############### ' SJs{sj} ', ' runs{sj, r} ' does not exsist ###########'])

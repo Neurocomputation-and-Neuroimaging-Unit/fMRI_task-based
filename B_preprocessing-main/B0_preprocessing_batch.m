@@ -1,12 +1,14 @@
 % function B0_preprocessing_batch
 
+% please send questions to Till Nierhaus (till.nierhaus@fu-berlin.de) or Timo T. Schmidt ().
+
 %### step A, structure data before running the preprocessing
-%### --> convert DICOM images to 4D NIFTI image IN BIDS FORMAT (ESSENTIAL)
-%### --> subject folders (e.g. 'sub-002') including functional (e.g. 'func') and anatomy (e.g. 'anat') folders
+%### --> convert DICOM images to 4D NIFTI image
+%### --> subject folders (e.g. 'SJ002') including functional (e.g. 'func') and anatomy (e.g. 'anat') folders
 %### --> optional instance for sessions
 %############################################################################################
 
-% required toolboxes (only download and add what you need):
+% required toolboxes:
 % SPM12 ( http://www.fil.ion.ucl.ac.uk/spm/ )
 % Rest_plus (1.8) ( http://restfmri.net/forum/index.php?q=rest )
 % hMRI (https://www.cbs.mpg.de/departments/neurophysics/software/hmri-toolbox)
@@ -16,23 +18,28 @@
 %#################### INPUT ##########################
 %#####################################################
 
-clc
-clear all
-close all
-
-addpath('C:\Users\saraw\Desktop\BIDS\task-based_fMRI_preprocessing-main')
-% addpath(genpath('C:\Users\...\Toolboxes\bramila-master'))
-% addpath(genpath('C:\Users\...\Toolboxes\REST_V1.8'))
-% addpath(genpath('C:\Users\...\Toolboxes\RESTplus_v1.24')) fucks up normalization somehow
-addpath(genpath('C:\Users\...\Toolboxes\hMRI-toolbox-0.4.0'))
-% addpath(genpath('C:\Users\saraw\...\Toolboxes\DPABI_V5.1_201201'))
-addpath('C:\Users\...\Toolboxes\spm12')
-
 %SPM-path
-SPM_path  = 'C:\Users\...\Toolboxes\spm12';
+SPM_path  = 'C:\Users\nnu13\Desktop\Sara\toolboxes\spm12';
 
 %data source directory
-src_dir      = 'C:\Users\saraw\Desktop\BIDS\fmri';
+src_dir      = 'D:\SEBs\Data';
+
+addpath('C:\Users\nnu13\Desktop\Sara\SEBs\analysis'); %%%%%%% your current working directory %%%%%%%%%%%%%% eg: 'F:\GForce\Dataanalysis\D_decoding_BIDS-main'
+addpath('C:\Users\nnu13\Desktop\Sara\SEBs\analysis\task-based_fMRI_preprocessing-main');
+addpath(genpath('C:\Users\nnu13\Desktop\Sara\toolboxes\hMRI-toolbox-0.6.1'));
+addpath('C:\Users\nnu13\Desktop\Sara\toolboxes\decoding_toolbox');
+addpath('C:\Users\nnu13\Desktop\Sara\toolboxes\spm12');
+addpath('C:\Users\nnu13\Desktop\Sara\toolboxes\niftiiTools');
+addpath('C:\Users\nnu13\Desktop\Sara\SEBs\analysis\task-based_fMRI_preprocessing-main\MARSS-main')
+addpath('C:\Users\nnu13\Desktop\Sara\SEBs\analysis\task-based_fMRI_preprocessing-main\MARSS-main\dependencies')
+addpath(genpath('C:\Users\nnu13\Desktop\Sara\toolboxes\DPABI_V8.2_240510'))
+
+%SPM-path
+
+%data source directory
+% src_dir      = 'C:\Users\saraw\Desktop\IMACU\pMS\pilot2\Data';
+src_dir      = 'D:\SEBs\Data';
+
 
 %subject identifiers
 cd(src_dir) 
@@ -41,17 +48,8 @@ for i=1:length(pb)
     SJs(1,i)={pb(i).name};
 end
 
-excludeSJ = []; % keep empty if preprocessing is planned for all subjects, other wise just put them in by number: [4 6 9]
-excludeRun = []; % same thing
+excludeSJ = [1:22 24:33]; % zb. unvollständige datensätze
 
-%unzip
-zip_files = dir(fullfile(src_dir, '**', ['sub-', '*.gz']));
-if ~isempty(zip_files) 
-	for z = 1:size(zip_files, 1)
-		gunzip([zip_files(z).folder filesep zip_files(z).name]);
-        delete([zip_files(z).folder filesep zip_files(z).name]);
-	end
-end
 
 %session & run identifiers
 sessNum = 0;
@@ -66,11 +64,7 @@ if exist([src_dir filesep SJs{1} filesep 'ses-1'])==7
         cd([src_dir filesep SJs{sb} filesep sessions{1} filesep 'func']);
         rd = dir('sub*.nii')
         for r = 1:length(rd)
-			if ismember(r, excludeRuns)
-                continue;
-            else
-            	runs(sb, r) = {rd(r).name};
-			end
+            runs(sb, r) = {rd(r).name};
         end
     end
 else
@@ -78,36 +72,43 @@ else
         cd([src_dir filesep SJs{sb} filesep 'func']);
         rd = dir('sub*.nii')
         for r = 1:length(rd)
-			if ismember(r, excludeRuns)
-                continue;
-            else
-            	runs(sb, r) = {rd(r).name};
-			end
+            runs(sb, r) = {rd(r).name};
         end
     end
 end
 
 %anatomy identifier
 ana=['anat'];
+%unzip
+zip_files = dir(fullfile(src_dir, '**', ['sub-', '*.gz']));
+if ~isempty(zip_files) 
+	for z = 1:size(zip_files, 1)
+		gunzip([zip_files(z).folder filesep zip_files(z).name]);
+        delete([zip_files(z).folder filesep zip_files(z).name]);
+	end
+end
 
-nifti_files = dir(fullfile(src_dir, '**', ['sub-', '*bold*.nii'])); %look for all functional nifti files
+nifti_files = dir(fullfile(src_dir, '**', ['sub-', '*bold.nii'])); %look for all functional nifti files
 anat_files = dir(fullfile(src_dir, '**', ['sub-', '*T1w.nii'])); %look for all anat nifti files
 
-%anatomical masks (for comp corr)
-wm_mask=['C:\Users\...\wm_mask_eroded.nii']; %white matter mask file
-csf_mask=['C:\Users\...\csf_mask_eroded.nii']; %csf mask file
-full_brain_mask=['C:\Users\...\full_brain_mask.nii']; %full brain mask file
+%anatomical masks
+mni_wm_mask=['C:\Users\nnu13\Desktop\Sara\toolboxes\wm_mask_eroded.nii']; %white matter mask file
+mni_csf_mask=['C:\Users\nnu13\Desktop\Sara\toolboxes\csf_mask_eroded.nii']; %csf mask file
+mni_full_brain_mask=['C:\Users\saraw\Desktop\BA\EXPRA2019_HIVR\full_brain_mask.nii']; %full brain mask file
 
 % selection of analysis steps (1-12) to be performed
-analysis_switch = [7 10]; %1 4 3 5 7 8 9
-start_prefix=''; %'gf4d'; %if totally raw data, then keep empty, otherwise add prefix, e.g. 's8wra'
+analysis_switch = [9 11]; %1 7 10 %1 4 3 5 7 8 9
+start_prefix='r'; %'gf4d'; %ohne artrepair 
+
 
 %now we get the data from the json file 
 json_files = (dir(fullfile(src_dir, '**', ['task', '*json']))); %extract all json files, althoguh they should have the same info 
-%to check if the first command returns an empty structure. If yes, it means the json files
+%because for some datasets (flicker and Ganzfeld) we have json files for
+%each nift file and these are named differently, we have to check if the
+%first command returns an empty structure. If yes, it means the json files
 %have a different naming, starting with subject 
 if isequal(size(json_files), [0, 1]) 
-    json_files = (dir(fullfile(src_dir, '**', ['sub-', '*bold*.json'])));
+    json_files = (dir(fullfile(src_dir, '**', ['sub-', '*bold.json'])));
 end
 
 json_file = [json_files(1).folder, filesep, json_files(1).name]; %we select the first json file to extract metadata from 
@@ -131,14 +132,14 @@ if n_slices_json ~= n_slices_nifti
     warning ("Number of slices does not match between json file and nifti") 
 end 
 
+%%% I suggest using the json values at least for TR since we know it is
+%%% missing in the nifti headers for some datasets
 TR = TR_json;
 n_slices = n_slices_json; 
 
-
-%# ------ NOTE: spike removal (e.g. "artrepair") should be performed as first step
-
 %# step 1  Segmentation
 %# ------ Create nuisance masks on your own or take the provided ones
+%# ------ NOTE: spike removal (e.g. "artrepair") should be performed as first step
 %# step 2 --> remove first x scans                       --> prefix: x(number of cut volumes)
 x=0;
 %# step 3 --> slice time correction                      --> prefix: a
@@ -146,26 +147,25 @@ x=0;
 %  otherwise do first realignment, then slice time correction (in analysis_switch 4 before 3)
 % n_slices = 37; % number of slices
 % slice_order=[1:n_slices];
-refslice=slice_order(round(length(slice_order)/2)); % reference slice
-% TR=2; % repetition time in sec.
-%# step 4  Realignment                                --> prefix: r
-% realign over all runs
-%# step 5  Coregister (estimate) mean-epi 2 anatomy (DEFAULT)
-corrPrefix = ''; % so if you perform differnt kinds of preprocessing, there will be 
-% multiple 'mean...nii' files -> check which one you want and if theres anything 
-% in between the 'mean' and 'sub-00...' then put that there (probably nothing or an a?)
-%# step 5b  Coregister (estimate & resclice) mean-epi 2 anatomy --> prefix c
-Co_er = 0; %default: 0, if 1, then estimate & reslice
-%# step 6  Normalization                              --> prefix: w
-vox_size=[2 2 2]; % preferred voxel size after Normailzation (in mm)
-%vox_size=repmat(info.PixelDimensions(1),1,3); % Voxel size from JSON-file (not changed)
-%# step 7  Scrubbing: calculate, interpolate outliers --> prefix: m(scrub_thresh)
+slice_order_stc = slice_timing*1000;
+refslice=slice_order_stc(round(length(slice_order_stc)/2)); % reference slice% TR=2; % repetition time in sec.
+%# step 4  Realignment                                --> prefix: r or rb
+rb = 1;                                     %%% if 1, realign over all runs, only for later decoding-analyses!
+over_sess = 1;
+%# step 5  Coregister (estimate) mean-epi 2 anatomy
+corrPrefix = '';
+%# step 6  Coregister (estimate & resclice) mean-epi 2 anatomy --> prefix c
+%# step 7  Normalization                              --> prefix: w
+vox_size=[2 2 2]; % voxel size in mm
+% vox_size=repmat(info.PixelDimensions(1),1,3);
+%# step 8  Scrubbing: calculate, interpolate outliers --> prefix: m(scrub_thresh)
 scrub_thresh=0.4; % threshhold FD for scrubbing
-%# step 8 Calculate WM and CSF Nuisance Signal
+%# step 9 Calculate WM and CSF Nuisance Signal
 numComp = 5; % number of principle components
-%# step 9 Smoothing                                   --> prefix: s
+sj_space = 1;
+%# step 10 Smoothing                                   --> prefix: s
 kernel_size=[8 8 8]; %FWHM kernel size
-%# step 10 Detrending                                 --> prefix: d
+%# step 11 Detrending                                 --> prefix: d
 
 %#####################################################
 %#################### INPUT end ######################
@@ -211,7 +211,7 @@ for n=analysis_switch
                                 display(['Step 2, delete first ' num2str(x) ' volumes: ' SJs{sj} ', ' runs{sj, r}])
                                 run_dir = fullfile(src_dir, SJs{sj}, 'func');
                                 B2_delete_scans(run_dir, ['^' currPrefix runs{sj, r}],x);
-                            elseif sessNum > 0 && exist([run_dir filesep SJs{sj} filesep 'ses-1' filesep runs{sj, r}])
+                            elseif sessNum > 0 && exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep runs{sj, r}])
                                 for ses = 1:sessNum
                                     display(['Step 2, delete first ' num2str(x) ' volumes: ' SJs{sj} ', ' runs{sj, r}])
                                     sesPath = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses)];
@@ -238,7 +238,7 @@ for n=analysis_switch
                             display(['Step 3, slice time correction: ' SJs{sj} ', ' runs{sj, r}])
                             funcPath = [src_dir filesep SJs{sj} filesep 'func'];
                             run_dir = fullfile(funcPath);
-                            B3_slice_time_correction(SJs{sj},runs{sj, r}, run_dir, ['^' currPrefix runs{sj, r}],n_slices,slice_order,refslice,TR);
+                            B3_slice_time_correction(SJs{sj},runs{sj, r}, run_dir, ['^' currPrefix runs{sj, r}],n_slices,slice_order_stc,refslice,TR);
                         elseif sessNum > 0 && exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep 'func' filesep runs{sj, r}])
                             for ses = 1:sessNum
                                 display(['Step 3, slice time correction: ' SJs{sj} ', ' runs{sj, r}])
@@ -268,9 +268,12 @@ for n=analysis_switch
                             for r = 1:size(runs, 2)
                                 run_files{r} = spm_select('List',run_dir,['^' currPrefix runs{sj, r}]);
                             end
-                            B4_Realignment_all_runs(run_dir, run_files);
-                            
-                        elseif sessNum > 0 && exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep 'func' filesep runs{sj, r}])
+                            if ~rb
+                                B4_realignment_run(sj_dir, run_files, over_sess);
+                            else
+                                B4b_Realignment_all_runs(sj_dir, run_files, over_sess);
+                            end
+                        elseif sessNum > 0 && exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep 'func' filesep runs{sj, r}]) && over_sess == 0
                                 for ses = 1:sessNum
                                     display(['Step 4, realignment: ' SJs{sj} ', ' runs{sj, r}])
                                     sesPath = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses) filesep 'func'];
@@ -278,9 +281,16 @@ for n=analysis_switch
                                     for r = 1:size(runs, 2)
                                         run_files{r} = spm_select('List',run_dir,['^' currPrefix runs{sj, r}]);
                                     end                                    
-                                    B4_Realignment_all_runs(sesPath, run_files);
-								end
-                        
+                                    if ~rb
+                                        B4_realignment_run(sj_dir, run_files);
+                                    else
+                                        B4b_Realignment_all_runs(sesPath, run_files, over_sess);
+                                    end
+                                end
+                        elseif over_sess == 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                            cd([src_dir filesep SJs{sj}]);
+                            runsies = dir(['**' filesep currPrefix SJs{sj} '*bold.nii']);
+                            B4b_Realignment_all_runs([src_dir filesep SJs{sj}], runsies, over_sess);
                         else
                             display('###########################################################')
                             display(['############### ' SJs{sj} ', ' runs{sj, r} ' does not exsist ###########'])
@@ -298,31 +308,29 @@ for n=analysis_switch
                 else
 %                     for r = 1:size(runs, 2)
                         if exist([src_dir filesep SJs{sj} filesep 'func'])
-                            
+                            display(['Step 5, coregistration: ' SJs{sj}])
                             funcPath = [src_dir filesep SJs{sj}];
                             func_dir        = fullfile(funcPath, 'func');
                             struct_dir      = fullfile(funcPath, ana);
-							if Co_er ~= 1
-								display(['Step 5, coregistration (estimate): ' SJs{sj}])
-                            	B5_coregister_est(currPrefix, func_dir, struct_dir, sj, '^s.*\.nii', runs, corrPrefix);
-							else
-								display(['Step 5b, coregistration (estimate & reslice): ' SJs{sj}])
-								B5b_coregister_est_re(currPrefix, func_dir, struct_dir, SJs{sj}, '^s.*\.nii', runs);
-							end
+                            B5_coregister_est(currPrefix, func_dir, struct_dir, sj, '^s.*\.nii', runs, corrPrefix);
                         elseif sessNum > 0 && exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep 'func'])
+                            if over_sess == 0
                                 for ses = 1:sessNum
                                     display(['Step 5, coregistration: ' SJs{sj}])
+
                                     sesPath = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses)];
                                     func_dir        = fullfile(sesPath, 'func');
                                     struct_dir      = fullfile(sesPath, ana);
-									if Co_er ~= 1
-										display(['Step 5, coregistration (estimate): ' SJs{sj}])
-                                    	B5_coregister_est(currPrefix, func_dir, struct_dir, sj, '^s.*\.nii', runs, corrPrefix);
-									else
-										display(['Step 5b, coregistration (estimate & reslice): ' SJs{sj}])
-										B5b_coregister_est_re(currPrefix, func_dir, struct_dir, SJs{sj}, '^s.*\.nii', runs);
-									end
+                                    B5_coregister_est(currPrefix, func_dir, struct_dir, sj, '^s.*\.nii', runs, corrPrefix);
                                 end
+                            else
+                                display(['Step 5, coregistration: ' SJs{sj}])
+                                sesPath = [src_dir filesep SJs{sj} filesep 'ses-1'];
+                                func_dir        = fullfile(sesPath, 'func');
+                                struct_dir      = fullfile(sesPath, ana);
+                                B5_coregister_est(currPrefix, func_dir, struct_dir, sj, '^s.*\.nii', runs, corrPrefix);
+                            end
+
                         else
                             display('###########################################################')
                             display(['############### ' SJs{sj} 's functional data do not exsist ###########'])
@@ -331,7 +339,36 @@ for n=analysis_switch
                 end
             end
             
-        case 6 %% Normalization
+        case 6 %% Coregister (estimate & reslice) mean-epi 2 anatomy
+            warning off
+            for sj = 1:numel(SJs)
+                if ismember(sj, excludeSJ)
+                    continue;
+                else
+                    for r = 1:size(runs, 2)
+                        if exist([src_dir filesep SJs{sj} filesep 'func' filesep runs{sj, r}])
+                            display(['Step 6, coregistration: ' SJs{sj} ', ' runs{sj, r}])
+                            funcPath = [src_dir filesep SJs{sj}];
+                            func_dir        = fullfile(funcPath, 'func');
+                            struct_dir      = fullfile(funcPath, ana);
+                            B6_coregister_est_re(currPrefix, func_dir, struct_dir, SJs{sj}, '^s.*\.nii', runs{sj, r});
+                        elseif sessNum > 0 && exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep 'func' filesep runs{sj, r}])
+                                for ses = 1:sessNum
+                                    display(['Step 6, coregistration: ' SJs{sj} ', ' runs{sj, r}])
+                                    sesPath = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses)];
+                                    func_dir        = fullfile(sesPath, 'func');
+                                    struct_dir      = fullfile(sesPath, ana);
+                                    B6_coregister_est_re(currPrefix, func_dir, struct_dir, SJs{sj}, '^s.*\.nii', runs{sj, r});
+                                end
+                        else
+                            display('###########################################################')
+                            display(['############### ' SJs{sj} ', ' runs{sj, r} ' does not exsist ###########'])
+                        end
+                    end
+                end
+            end
+            
+        case 7 %% Normalization
             for sj = 1:numel(SJs)
                 if ismember(sj, excludeSJ)
                     continue;
@@ -339,18 +376,18 @@ for n=analysis_switch
                     
 %                     for r = 1:size(runs, 2)
                         if exist([src_dir filesep SJs{sj} filesep 'func'])
-                            display(['Step 6, normalization: ' SJs{sj}])
+                            display(['Step 7, normalization: ' SJs{sj}])
                             funcPath = [src_dir filesep SJs{sj}];
                             struct_dir = fullfile(funcPath, ana);
                             data_dir = fullfile(funcPath, 'func');
-                            B6_normalization_run(data_dir, struct_dir, sj, runs, vox_size, currPrefix);
+                            B7_normalization_run(data_dir, struct_dir, sj, runs, vox_size, currPrefix);
                         elseif sessNum > 0 && exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep 'func'])
                                 for ses = 1:sessNum
-                                    display(['Step 6, normalization: ' SJs{sj}])
+                                    display(['Step 7, normalization: ' SJs{sj}])
                                     sesPath = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses)];
                                     func_dir        = fullfile(sesPath, 'func');
                                     struct_dir      = fullfile(sesPath, ana);
-                                    B6_normalization_run(func_dir, struct_dir, sj, runs, vox_size, currPrefix);
+                                    B7_normalization_run(data_dir, struct_dir, sj, runs, vox_size, currPrefix);
                                 end
                         else
                             display('###########################################################')
@@ -361,7 +398,7 @@ for n=analysis_switch
             end
             currPrefix=['w' currPrefix];
             
-        case 7 %% Scrubbing: calculate outliers
+        case 8 %% Scrubbing: calculate outliers
             scrub_prefix=['m' num2str(scrub_thresh)];
             for sj = 1:numel(SJs)
                 if ismember(sj, excludeSJ)
@@ -369,12 +406,12 @@ for n=analysis_switch
                 else
                     for r = 1:size(runs, 2)
                         if exist([src_dir filesep SJs{sj} filesep 'func' filesep runs{sj, r}])
-                            display(['Step 7, scrubbing: ' SJs{sj} ', ' runs{sj, r}])
+                            display(['Step 8, scrubbing: ' SJs{sj} ', ' runs{sj, r}])
                             funcPath = [src_dir filesep SJs{sj}];
                             data_dir = fullfile(funcPath, 'func');
                             %estimate and save motion statistics
                             n=1;
-                            k = strfind(runs{sj, r}, 'd.nii'); %% use prefix without file extension
+                            k = strfind(runs{sj, r}, 'd.nii')
                             f=spm_select('List', data_dir, ['^rp_' currPrefix(n:end) runs{sj, r}(1:k) '.txt']);
                             while isempty(f)
                                 n=n+1;
@@ -386,24 +423,23 @@ for n=analysis_switch
                             outliers=fwd>scrub_thresh;
                             percent_out=(sum(outliers)/length(outliers))*100;
                             disp(['outliers for ' num2str(SJs{sj}) ', ' runs{r} ': ' num2str(percent_out) '%']);
-                            save([data_dir filesep scrub_prefix currPrefix runs{sj, r}(1:k) '_FWDstat.mat'],'fwd','rms','outliers','percent_out','scrub_thresh','cfg')
+                            save([data_dir filesep scrub_prefix currPrefix '_' runs{sj, r}(1:k) '_FWDstat.mat'],'fwd','rms','outliers','percent_out','scrub_thresh','cfg')
                             %srub outliers by replacing them with average of nearest neighbors
-                            B7_scrub_data(data_dir, ['^' currPrefix runs{sj, r}], outliers,  scrub_prefix);
+                            B8_scrub_data(data_dir, ['^' currPrefix runs{sj, r}], outliers,  scrub_prefix);
                             all_percent_out(sj,r)=percent_out;
                             all_rp{sj,r}=load(cfg.motionparam);
 
                         elseif exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep 'func' filesep runs{sj, r}])
                             for ses = 1:sessNum
-                                display(['Step 7, scrubbing: ' SJs{sj} ', ' runs{sj, r}])
+                                display(['Step 8, scrubbing: ' SJs{sj} ', ' runs{sj, r}])
                                 funcPath = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses)];
                                 data_dir = fullfile(funcPath, 'func');
                                 %estimate and save motion statistics
                                 n=1;
-								k = strfind(runs{sj, r}, 'd.nii'); %% use prefix without file extension
-                                f=spm_select('List', data_dir, ['^rp_' currPrefix(n:end) runs{sj, r}(1:k) '.*\.txt']);
+                                f=spm_select('List', data_dir, ['^rp_' currPrefix(n:end) '.*\.txt']);
                                 while isempty(f)
                                     n=n+1;
-                                    f=spm_select('List', data_dir, ['^rp_' currPrefix(n:end) runs{sj, r}(1:k) '.*\.txt']);
+                                    f=spm_select('List', data_dir, ['^rp_' currPrefix(n:end) '.*\.txt']);
                                 end
                                 cfg.motionparam=[data_dir filesep f];
                                 cfg.prepro_suite = 'spm';
@@ -411,9 +447,9 @@ for n=analysis_switch
                                 outliers=fwd>scrub_thresh;
                                 percent_out=(sum(outliers)/length(outliers))*100;
                                 disp(['outliers for ' num2str(SJs{sj}) ', ' runs{sj, r} ': ' num2str(percent_out) '%']);
-                                save([data_dir filesep scrub_prefix currPrefix runs{sj, r}(1:k) '_FWDstat.mat'],'fwd','rms','outliers','percent_out','scrub_thresh','cfg')
+                                save([data_dir filesep scrub_prefix currPrefix '_' SJs{sj} '_' runs{sj, r} '_FWDstat.mat'],'fwd','rms','outliers','percent_out','scrub_thresh','cfg')
                                 %srub outliers by replacing them with average of nearest neighbors
-                                B7_scrub_data(data_dir, ['^' currPrefix runs{sj, r}], outliers,  scrub_prefix);
+                                B8_scrub_data(data_dir, ['^' currPrefix runs{sj, r}], outliers,  scrub_prefix);
                                 all_percent_out(sj,r)=percent_out;
                                 all_rp{sj,r}=load(cfg.motionparam);
                             end
@@ -427,23 +463,64 @@ for n=analysis_switch
             currPrefix=[scrub_prefix currPrefix];
             save([src_dir filesep 'all_MOTIONstat_' currPrefix '.mat'],'SJs','runs','scrub_thresh','all_percent_out','all_rp')
             
-        case 8 %% CompCorr
+        case 9 %% CompCorr
             for sj = 1:numel(SJs)
                 if ismember(sj, excludeSJ)
                     continue;
                 else
+                    counter = 0;
                     for r = 1:size(runs, 2)
                         if exist([src_dir filesep SJs{sj} filesep 'func' filesep runs{sj, r}])
-                            display(['Step 8, CompCorr: ' SJs{sj} ', ' runs{sj, r}])
+                            display(['Step 9, CompCorr: ' SJs{sj} ', ' runs{sj, r}])
                             funcPath = [src_dir filesep SJs{sj}];
                             data_dir = fullfile(funcPath, 'func');
-                            B8_compcorr_run(data_dir, SJs{sj}, ['^' currPrefix runs{sj, r}], numComp, wm_mask, csf_mask);
+                            if sj_space == 1
+                                anat_dir = fullfile(funcPath, 'anat');
+
+                                if counter == 0
+                                    wm_mask = [anat_dir filesep 'c2' SJs{sj} '_T1w.nii'];
+                                    csf_mask = [anat_dir filesep 'c3' SJs{sj} '_T1w.nii'];
+                                    f2 = spm_select('List', data_dir, ['^mean' corrPrefix runs{sj, 1}]);
+                                    numVols = size(f2,1);
+                                    mean_img   = cellstr([repmat([data_dir filesep], numVols, 1) f2 repmat(',1', numVols, 1)]);
+
+                                    B95_reslice_masks_to_functional(mean_img, wm_mask, csf_mask);
+                                    counter = 1;
+                                end
+
+                                wm_mask = [anat_dir filesep 'rc2' SJs{sj} '_T1w.nii'];
+                                csf_mask = [anat_dir filesep 'rc3' SJs{sj} '_T1w.nii'];
+
+                            else
+                                wm_mask = mni_wm_mask;
+                                csf_mask = mni_csf_mask;
+                            end
+                            B9_compcorr_run(data_dir, SJs{sj}, ['^' currPrefix runs{sj, r}], numComp, wm_mask, csf_mask);
                         elseif exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep 'func' filesep runs{sj, r}])
                             for ses = 1:sessNum
-                                    display(['Step 8, CompCorr: ' SJs{sj} ', ' runs{sj, r}])
+                                ses_dir = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses)];
+                                if sj_space == 1
+                                    anat_dir = fullfile(ses_dir, 'anat');
+                                    if counter == 0
+                                        wm_mask = [anat_dir filesep 'c2' SJs{sj} '_T1w.nii'];
+                                        csf_mask = [anat_dir filesep 'c3' SJs{sj} '_T1w.nii'];
+                                        f2 = spm_select('List', data_dir, ['^mean' corrPrefix runs{sj, 1}]);
+                                        numVols = size(f2,1);
+                                        mean_img   = cellstr([repmat([data_dir filesep], numVols, 1) f2 repmat(',1', numVols, 1)]);
+
+                                        B95_reslice_masks_to_functional(mean_img, wm_mask, csf_mask);
+                                        counter = 1;
+                                    end
+                                    wm_mask = [anat_dir filesep 'rc2' SJs{sj} '_T1w.nii'];
+                                    csf_mask = [anat_dir filesep 'rc3' SJs{sj} '_T1w.nii'];
+                                else
+                                    wm_mask = mni_wm_mask;
+                                    csf_mask = mni_csf_mask;
+                                end
+                                    display(['Step 4, cc: ' SJs{sj} ', ' runs{sj, r}])
                                     sesPath = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses) filesep 'func'];
                                     data_dir = fullfile(sesPath);
-                                    B8_compcorr_run(data_dir, SJs{sj}, ['^' currPrefix runs{sj, r}], numComp, wm_mask, csf_mask);
+                                    B9_compcorr_run(data_dir, SJs{sj}, ['^' currPrefix runs{sj, r}], numComp, wm_mask, csf_mask);
                             end
                         else
                             display('###########################################################')
@@ -453,24 +530,24 @@ for n=analysis_switch
                 end
             end
             
-        case 9 %% Smoothing
+        case 10 %% Smoothing
             for sj = 1:numel(SJs)
                 if ismember(sj, excludeSJ)
                     continue;
                 else
                     for r = 1:size(runs, 2)
                         if exist([src_dir filesep SJs{sj} filesep 'func' filesep runs{sj, r}])
-                            display(['Step 9, smoothing: ' SJs{sj} ', ' runs{sj, r}])
+                            display(['Step 10, smoothing: ' SJs{sj} ', ' runs{sj, r}])
                             funcPath = [src_dir filesep SJs{sj}];
                             run_dir = fullfile(funcPath, 'func');
-                            B9_smoothing_run(run_dir, SJs{sj}, ['^' currPrefix runs{sj, r}],kernel_size);
+                            B10_smoothing_run(run_dir, SJs{sj}, ['^' currPrefix runs{sj, r}],kernel_size);
                             display([SJs{sj} ', ' runs{r} ' is done'])
                         elseif exist([src_dir filesep SJs{sj} filesep 'ses-1' filesep 'func' filesep runs{sj, r}])
                             for ses = 1:sessNum
-                                    display(['Step 9, smoothing: ' SJs{sj} ', ' runs{sj, r}])
+                                    display(['Step 10, smoothing: ' SJs{sj} ', ' runs{sj, r}])
                                     sesPath = [src_dir filesep SJs{sj} filesep 'ses-' num2str(ses) filesep 'func'];
                                     run_dir = fullfile(sesPath);
-                                    B9_smoothing_run(run_dir, SJs{sj}, ['^' currPrefix runs{sj, r}],kernel_size);
+                                    B10_smoothing_run(run_dir, SJs{sj}, ['^' currPrefix runs{sj, r}],kernel_size);
                             end
                         else
                             display('###########################################################')
@@ -481,12 +558,12 @@ for n=analysis_switch
             end
             currPrefix=['s' num2str(unique(kernel_size)) currPrefix];
             
-        case 10 %% Detrending
+        case 11 %% Detrending
             for sj = 1:numel(SJs)
                 if ismember(sj, excludeSJ)
                     continue;
                 else
-                    display(['Step 10, Detrending: ' SJs{sj}])
+                    display(['Step 11, Detrending: ' SJs{sj}])
                     for r = 1:size(runs, 2)
                         if exist([src_dir filesep SJs{sj} filesep 'func' filesep runs{sj, r}])
                             funcPath = [src_dir filesep SJs{sj}];
@@ -517,7 +594,7 @@ for n=analysis_switch
                         end
                     end
                     if exist('fileset')
-                        B10_detrending_lmgs(fileset);
+                        B11_detrending_lmgs(fileset);
                         clear fileset files
                     end
                     display([SJs{sj} ', is done'])
